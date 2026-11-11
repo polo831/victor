@@ -62,6 +62,7 @@ class AuthController extends Controller
             "menu" => SiteController::menu(),
             "menu_res" => SiteController::menu_res(),
             "error" => $error,
+            "mensajeExito" => $mensajeExito,
             "ruta" => self::$path,
         ];
         

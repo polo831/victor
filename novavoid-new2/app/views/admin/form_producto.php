@@ -63,16 +63,16 @@
 
     <div class="form-group">
         <label for="categoria_id">Categoría:</label>
-        <select id="categoria_id" name="categoria_id" required>
-            <option value="">Seleccione una categoría...</option>
-            <?php if (!empty($datos['categorias'])): ?>
-                <?php foreach ($datos['categorias'] as $cat): ?>
-                    <option value="<?= $cat->id ?>" <?= (isset($datos['producto']->categoria_id) && $datos['producto']->categoria_id == $cat->id) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($cat->nombre) ?>
-                    </option>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </select>
+       <select id="id_categoria" name="id_categoria" class="form-control" required>
+    <option value="">Seleccione una categoría...</option>
+    <?php if (!empty($datos['categorias'])): ?>
+        <?php foreach ($datos['categorias'] as $cat): ?>
+            <option value="<?= $cat->id_categoria ?>">
+                <?= htmlspecialchars($cat->nombre_categoria ?? $cat->nombre) ?>
+            </option>
+        <?php endforeach; ?>
+    <?php endif; ?>
+</select>
     </div>
 
     <div class="form-group">

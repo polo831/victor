@@ -49,14 +49,15 @@ class AdminController extends Controller
         SessionController::onlyUsers();
         $ruta = self::$path;
 
-        // Consultamos los productos uniendo la tabla stock mediante LEFT JOIN
+        // Consultamos los productos adaptados a las columnas reales de tu base de datos
         $productos = DataBase::query("
-         SELECT p.*, s.cantidad as stock, c.nombre as categoria_nombre 
+         SELECT p.*, s.cantidad as stock, c.nombre_categoria as categoria_nombre 
          FROM productos p 
-        LEFT JOIN stock s ON p.id = s.producto_id 
-        LEFT JOIN categorias c ON p.categoria_id = c.id
-        ORDER BY p.id DESC
+         LEFT JOIN stock s ON p.id_producto = s.producto_id 
+         LEFT JOIN categorias c ON p.id_categoria = c.id_categoria 
+         ORDER BY p.id_producto DESC
         ");
+        
         $datos = [
             "titulo" => "Gestión de Productos",
             "productos" => $productos
@@ -79,33 +80,34 @@ class AdminController extends Controller
     }
 
     /* Mostrar formulario para crear un producto nuevo */
-    public function actionCrearProducto()
-    {
-        SessionController::onlyUsers();
-        $ruta = self::$path;
+   public function actionCrearProducto()
+{
+    SessionController::onlyUsers();
+    $ruta = self::$path;
 
-        $categorias = DataBase::query("SELECT * FROM categorias");
+    // 1. Obtener las categorías de la base de datos para el desplegable
+    $categorias = DataBase::query("SELECT * FROM categorias");
 
-        $datos = [
-            "titulo" => "Nuevo Producto",
-            "categorias" => $categorias
-        ];
+    $datos = [
+        "titulo" => "Nuevo Producto",
+        "categorias" => $categorias // <-- Esto es lo que alimenta el select de la vista
+    ];
 
-        static::path();
-        $nombre_de_archivoDeVista = 'form_producto';
-        
-        $parametros_de_vista = [
-            "head" => SiteController::head(),
-            "header" => SiteController::header(),
-            "topbar" => SiteController::topbar(),
-            "menu" => SiteController::menu(),
-            "menu_res" => SiteController::menu_res(),
-            "datos" => $datos,
-            "ruta" => $ruta
-        ];
+    static::path();
+    $nombre_de_archivoDeVista = 'form_producto'; // o el nombre de tu vista de formulario
+    
+    $parametros_de_vista = [
+        "head" => SiteController::head(),
+        "header" => SiteController::header(),
+        "topbar" => SiteController::topbar(),
+        "menu" => SiteController::menu(),
+        "menu_res" => SiteController::menu_res(),
+        "datos" => $datos,
+        "ruta" => $ruta
+    ];
 
-        Response::render($this->viewDir(__NAMESPACE__), $nombre_de_archivoDeVista, $parametros_de_vista);
-    }
+    Response::render($this->viewDir(__NAMESPACE__), $nombre_de_archivoDeVista, $parametros_de_vista);
+}
 
     /* Mostrar formulario para editar un producto existente */
 
