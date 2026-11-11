@@ -44,28 +44,33 @@ class AdminController extends Controller
     }
 
      /* Listar productos en la gestión (ABM) */
-   public function actionProductos()
+    public function actionProductos()
     {
         SessionController::onlyUsers();
         $ruta = self::$path;
 
-        // Consultamos los productos adaptados a las columnas reales de tu base de datos
         $productos = DataBase::query("
-         SELECT p.*, s.cantidad as stock, c.nombre_categoria as categoria_nombre 
-         FROM productos p 
-         LEFT JOIN stock s ON p.id_producto = s.producto_id 
-         LEFT JOIN categorias c ON p.id_categoria = c.id_categoria 
-         ORDER BY p.id_producto DESC
+            SELECT
+                p.*,
+                s.cantidad AS stock,
+                c.nombre_categoria AS categoria_nombre
+            FROM productos p
+            LEFT JOIN stock s
+                ON p.id_producto = s.producto_id
+            LEFT JOIN categorias c
+                ON p.id_categoria = c.id_categoria
+            ORDER BY p.id_producto DESC
         ");
-        
+
         $datos = [
             "titulo" => "Gestión de Productos",
             "productos" => $productos
         ];
 
         static::path();
-        $nombre_de_archivoDeVista = 'productos'; 
-        
+
+        $nombre_de_archivoDeVista = 'productos';
+
         $parametros_de_vista = [
             "head" => SiteController::head(),
             "header" => SiteController::header(),
@@ -76,7 +81,11 @@ class AdminController extends Controller
             "ruta" => $ruta
         ];
 
-        Response::render($this->viewDir(__NAMESPACE__), $nombre_de_archivoDeVista, $parametros_de_vista);
+        Response::render(
+            $this->viewDir(__NAMESPACE__),
+            $nombre_de_archivoDeVista,
+            $parametros_de_vista
+        );
     }
 
     /* Mostrar formulario para crear un producto nuevo */
@@ -110,29 +119,34 @@ class AdminController extends Controller
 }
 
     /* Mostrar formulario para editar un producto existente */
-
-
-  
     public function actionEditarProducto()
     {
         SessionController::onlyUsers();
         $ruta = self::$path;
 
-        $id = $_GET['id'] ?? null;
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
         $producto = null;
 
-        if ($id) {
-            // Consultamos el producto uniendo la tabla stock con LEFT JOIN
+        if ($id !== null && $id > 0) {
+
             $resultado = DataBase::query("
-                SELECT p.*, s.cantidad as stock 
-                FROM productos p 
-                LEFT JOIN stock s ON p.id = s.producto_id 
-                WHERE p.id = :id
+                SELECT
+                    p.*,
+                    s.cantidad AS stock
+                FROM productos p
+                LEFT JOIN stock s
+                    ON p.id_producto = s.producto_id
+                WHERE p.id_producto = :id
             ", [':id' => $id]);
+
             $producto = $resultado[0] ?? null;
         }
 
-        $categorias = DataBase::query("SELECT * FROM categorias");
+        $categorias = DataBase::query("
+            SELECT id_categoria, nombre_categoria
+            FROM categorias
+            ORDER BY nombre_categoria
+        ");
 
         $datos = [
             "titulo" => "Editar Producto",
@@ -141,8 +155,9 @@ class AdminController extends Controller
         ];
 
         static::path();
+
         $nombre_de_archivoDeVista = 'form_producto';
-        
+
         $parametros_de_vista = [
             "head" => SiteController::head(),
             "header" => SiteController::header(),
@@ -153,94 +168,213 @@ class AdminController extends Controller
             "ruta" => $ruta
         ];
 
-        Response::render($this->viewDir(__NAMESPACE__), $nombre_de_archivoDeVista, $parametros_de_vista);
+        Response::render(
+            $this->viewDir(__NAMESPACE__),
+            $nombre_de_archivoDeVista,
+            $parametros_de_vista
+        );
     }
-
-
-
-
-    /* Procesar la inserción o actualización de un producto */
+   
     public function actionGuardarProducto()
     {
         SessionController::onlyUsers();
         static::path();
 
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $id = $_POST['id'] ?? null;
-            $nombre = trim($_POST['nombre'] ?? '');
-            $precio = $_POST['precio'] ?? 0;
-            $stockCantidad = $_POST['stock'] ?? 0;
-            $categoria_id = $_POST['categoria_id'] ?? null;
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return;
+        }
 
-            // Manejo de imagen opcional
-            $imagen = null;
-            if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
-                $nombreArchivo = time() . '_' . $_FILES['imagen']['name'];
-                move_uploaded_file($_FILES['imagen']['tmp_name'], __DIR__ . '/../../public/img/' . $nombreArchivo);
+        $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
+        $nombre = trim($_POST['nombre'] ?? '');
+        $precio = (float)($_POST['precio'] ?? 0);
+        $stockCantidad = (int)($_POST['stock'] ?? 0);
+        $idCategoria = (int)($_POST['id_categoria'] ?? 0);
+
+        // Validaciones
+        if (
+            $nombre === '' ||
+            $precio <= 0 ||
+            $stockCantidad < 0 ||
+            $idCategoria <= 0
+        ) {
+            die('Todos los campos son obligatorios y deben contener valores válidos.');
+        }
+
+        // Verificar categoría
+        $categoria = DataBase::query(
+            "SELECT id_categoria FROM categorias WHERE id_categoria = :id",
+            [':id' => $idCategoria]
+        );
+
+        if (empty($categoria)) {
+            die('La categoría seleccionada no existe.');
+        }
+
+        // Verificar producto si es una edición
+        if ($id !== null) {
+
+            $productoExistente = DataBase::query(
+                "SELECT id_producto FROM productos WHERE id_producto = :id",
+                [':id' => $id]
+            );
+
+            if (empty($productoExistente)) {
+                die('El producto que intentás editar no existe.');
+            }
+        }
+
+        // Manejo de imagen
+        $imagen = null;
+
+        if (
+            isset($_FILES['imagen']) &&
+            $_FILES['imagen']['error'] === UPLOAD_ERR_OK
+        ) {
+            $nombreArchivo = time() . '_' . basename($_FILES['imagen']['name']);
+            $destino = __DIR__ . '/../../public/img/' . $nombreArchivo;
+
+            if (move_uploaded_file($_FILES['imagen']['tmp_name'], $destino)) {
                 $imagen = $nombreArchivo;
             }
+        }
 
-            if (!empty($id)) {
-                // 1. Actualizar datos básicos del producto
-                if ($imagen) {
-                    $sql = "UPDATE productos SET nombre = :nombre, precio = :precio, categoria_id = :categoria_id, imagen = :imagen WHERE id = :id";
-                    DataBase::execute($sql, [':nombre' => $nombre, ':precio' => $precio, ':categoria_id' => $categoria_id, ':imagen' => $imagen, ':id' => $id]);
-                } else {
-                    $sql = "UPDATE productos SET nombre = :nombre, precio = :precio, categoria_id = :categoria_id WHERE id = :id";
-                    DataBase::execute($sql, [':nombre' => $nombre, ':precio' => $precio, ':categoria_id' => $categoria_id, ':id' => $id]);
-                }
+        if ($id !== null) {
 
-                // 2. Actualizar o insertar el stock en la tabla stock
-                $checkStock = DataBase::query("SELECT id FROM stock WHERE producto_id = :id", [':id' => $id]);
-                if (!empty($checkStock)) {
-                    DataBase::execute("UPDATE stock SET cantidad = :cantidad WHERE producto_id = :producto_id", [':cantidad' => $stockCantidad, ':producto_id' => $id]);
-                } else {
-                    DataBase::execute("INSERT INTO stock (producto_id, cantidad) VALUES (:producto_id, :cantidad)", [':producto_id' => $id, ':cantidad' => $stockCantidad]);
-                }
+            // Actualizar producto
+            if ($imagen !== null) {
 
-            } else {
-                // 1. Insertar nuevo producto en la tabla productos
-                $sql = "INSERT INTO productos (nombre, precio, categoria_id, imagen) VALUES (:nombre, :precio, :categoria_id, :imagen)";
-                DataBase::execute($sql, [
+                $sql = "
+                    UPDATE productos
+                    SET nombre_prenda = :nombre,
+                        precio = :precio,
+                        id_categoria = :id_categoria,
+                        imagen = :imagen
+                    WHERE id_producto = :id
+                ";
+
+                $params = [
                     ':nombre' => $nombre,
                     ':precio' => $precio,
-                    ':categoria_id' => $categoria_id,
-                    ':imagen' => $imagen ?? 'no-image.png'
-                ]);
+                    ':id_categoria' => $idCategoria,
+                    ':imagen' => $imagen,
+                    ':id' => $id
+                ];
 
-                // 2. Obtener el ID del producto recién creado para asignarle su stock
-                $nuevoProducto = DataBase::query("SELECT id FROM productos ORDER BY id DESC LIMIT 1");
-                $productoId = $nuevoProducto[0]->id ?? null;
+            } else {
 
-                if ($productoId) {
-                    DataBase::execute("INSERT INTO stock (producto_id, cantidad) VALUES (:producto_id, :cantidad)", [
-                        ':producto_id' => $productoId,
-                        ':cantidad' => $stockCantidad
-                    ]);
-                }
+                $sql = "
+                    UPDATE productos
+                    SET nombre_prenda = :nombre,
+                        precio = :precio,
+                        id_categoria = :id_categoria
+                    WHERE id_producto = :id
+                ";
+
+                $params = [
+                    ':nombre' => $nombre,
+                    ':precio' => $precio,
+                    ':id_categoria' => $idCategoria,
+                    ':id' => $id
+                ];
             }
 
-            header("Location: " . self::$path . "index.php?url=admin/productos");
-            exit();
-        }
-    }
+            DataBase::execute($sql, $params);
 
-    /* Eliminar un producto */
-    public function actionEliminarProducto()
-    {
-        SessionController::onlyUsers();
-        static::path();
-        
-        $id = $_GET['id'] ?? null;
-        if ($id) {
-            DataBase::execute("DELETE FROM productos WHERE id = :id", [':id' => $id]);
+            // Verificar si ya existe un registro de stock
+            $checkStock = DataBase::query(
+                "SELECT id FROM stock WHERE producto_id = :id",
+                [':id' => $id]
+            );
+
+            if (!empty($checkStock)) {
+
+                DataBase::execute(
+                    "UPDATE stock
+                    SET cantidad = :cantidad
+                    WHERE producto_id = :id",
+                    [
+                        ':cantidad' => $stockCantidad,
+                        ':id' => $id
+                    ]
+                );
+
+            } else {
+
+                DataBase::execute(
+                    "INSERT INTO stock (producto_id, cantidad)
+                    VALUES (:id, :cantidad)",
+                    [
+                        ':id' => $id,
+                        ':cantidad' => $stockCantidad
+                    ]
+                );
+            }
+
+        } else {
+
+            // Crear producto
+            DataBase::execute(
+                "INSERT INTO productos
+                    (nombre_prenda, precio, id_categoria, imagen)
+                VALUES
+                    (:nombre, :precio, :id_categoria, :imagen)",
+                [
+                    ':nombre' => $nombre,
+                    ':precio' => $precio,
+                    ':id_categoria' => $idCategoria,
+                    ':imagen' => $imagen ?? 'no-image.png'
+                ]
+            );
+
+            // Obtener el ID del último producto insertado
+            $nuevoProducto = DataBase::query(
+                "SELECT LAST_INSERT_ID() AS id_producto"
+            );
+
+            $productoId = $nuevoProducto[0]->id_producto ?? null;
+
+            if ($productoId) {
+
+                DataBase::execute(
+                    "INSERT INTO stock (producto_id, cantidad)
+                    VALUES (:id, :cantidad)",
+                    [
+                        ':id' => $productoId,
+                        ':cantidad' => $stockCantidad
+                    ]
+                );
+            }
         }
 
         header("Location: " . self::$path . "index.php?url=admin/productos");
         exit();
     }
+   
+    public function actionEliminarProducto()
+    {
+        SessionController::onlyUsers();
+        static::path();
 
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
+        if ($id !== null && $id > 0) {
+
+            // Primero eliminamos el stock asociado
+            DataBase::execute(
+                "DELETE FROM stock WHERE producto_id = :id",
+                [':id' => $id]
+            );
+
+            // Después eliminamos el producto
+            DataBase::execute(
+                "DELETE FROM productos WHERE id_producto = :id",
+                [':id' => $id]
+            );
+        }
+
+        header("Location: " . self::$path . "index.php?url=admin/productos");
+        exit();
+    }
 
    /* 1. Listar usuarios */
     public function actionUsuarios()

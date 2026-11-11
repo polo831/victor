@@ -44,11 +44,11 @@
 
                 <form action="<?= $ruta ?>admin/guardarProducto" method="POST" enctype="multipart/form-data" style="margin-top: 20px;">
     <!-- Campo oculto para edición o creación (usando objetos ->) -->
-    <input type="hidden" name="id" value="<?= $datos['producto']->id ?? '' ?>">
+    <input type="hidden" name="id" value="<?= $datos['producto']->id_producto ?? '' ?>">
 
     <div class="form-group">
         <label for="nombre">Nombre del Producto:</label>
-        <input type="text" id="nombre" name="nombre" value="<?= htmlspecialchars($datos['producto']->nombre ?? '') ?>" required>
+        <input type="text" id="nombre" name="nombre" value="<?= htmlspecialchars($datos['producto']->nombre_prenda ?? '') ?>" required>
     </div>
 
     <div class="form-group">
@@ -62,17 +62,24 @@
     </div>
 
     <div class="form-group">
-        <label for="categoria_id">Categoría:</label>
-       <select id="id_categoria" name="id_categoria" class="form-control" required>
-    <option value="">Seleccione una categoría...</option>
-    <?php if (!empty($datos['categorias'])): ?>
-        <?php foreach ($datos['categorias'] as $cat): ?>
-            <option value="<?= $cat->id_categoria ?>">
-                <?= htmlspecialchars($cat->nombre_categoria ?? $cat->nombre) ?>
-            </option>
-        <?php endforeach; ?>
-    <?php endif; ?>
-</select>
+        <label for="id_categoria">Categoría:</label>
+
+        <select id="id_categoria" name="id_categoria" class="form-control" required>
+            <option value="">Seleccione una categoría...</option>
+
+            <?php if (!empty($datos['categorias'])): ?>
+                <?php foreach ($datos['categorias'] as $cat): ?>
+                    <option
+                        value="<?= htmlspecialchars($cat->id_categoria) ?>"
+                        <?= (isset($datos['producto']->id_categoria) &&
+                            $datos['producto']->id_categoria == $cat->id_categoria)
+                            ? 'selected' : '' ?>
+                    >
+                        <?= htmlspecialchars($cat->nombre_categoria ?? $cat->nombre ?? '') ?>
+                    </option>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </select>
     </div>
 
     <div class="form-group">

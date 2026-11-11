@@ -18,6 +18,11 @@ class DataBase
 	public static $numRows;
 
 	private function __construct() {}
+
+	public static function lastInsertId()
+	{
+    	return self::connection()->lastInsertId();
+	}
     
 	public static function connection(){
 		self::$host   = $_ENV['DB_HOST'];
