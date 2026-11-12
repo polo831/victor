@@ -32,7 +32,7 @@
                 <li><a href="<?$ruta ?> admin/panel">Inicio</a></li>
                 <li><a href="<?$ruta ?> admin/productos">Gestionar Productos (ABM)</a></li>
                 <li><a href="<?$ruta ?> admin/usuarios">Gestionar Usuarios</a></li>
-                <li><a href="http://localhost/polo/novavoid-new/public/index.php?url=auth/logout">Cerrar Sesión</a></li>
+                <li><a href="http://localhost/victor/novavoid-new2/public/index.php?url=auth/logout">Cerrar Sesión</a></li>
             </ul>
         </nav>
        

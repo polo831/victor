@@ -523,16 +523,17 @@ class AdminController extends Controller
     }
 
     /* 1. Listar todos los pedidos */
+
     public function actionPedidos()
     {
         SessionController::onlyUsers();
         $ruta = self::$path;
 
-        $sql = "SELECT p.*, u.nombre as cliente_nombre, m.nombre as medio_pago_nombre 
+        $sql = "SELECT p.*, p.id_pedido as id, u.nombre as cliente_nombre, m.nombre as medio_pago_nombre 
                 FROM pedidos p 
-                LEFT JOIN usuarios u ON p.usuario_id = u.id 
-                LEFT JOIN medios_pago m ON p.medio_pago_id = m.id 
-                ORDER BY p.id DESC";
+                LEFT JOIN usuarios u ON p.id_usuario = u.id 
+                LEFT JOIN medios_pago m ON p.id_pago = m.id 
+                ORDER BY p.id_pedido DESC";
         $pedidos = DataBase::query($sql);
 
         $datos = [
@@ -555,6 +556,7 @@ class AdminController extends Controller
 
         Response::render($this->viewDir(__NAMESPACE__), $nombre_de_archivoDeVista, $parametros_de_vista);
     }
+   
 
     /* 2. Ver el detalle específico de un pedido */
     public function actionDetallePedido()
@@ -567,22 +569,26 @@ class AdminController extends Controller
         $detalles = [];
 
         if ($pedido_id) {
-            // Datos principales del pedido, cliente y medio de pago
-            $sqlPedido = "SELECT p.*, u.nombre as cliente_nombre, u.email as cliente_email, u.direccion as cliente_direccion, m.nombre as medio_pago_nombre 
+            // 1. Datos principales del pedido, cliente y medio de pago (usando p.id_pedido y p.id_pago)
+            $sqlPedido = "SELECT p.*, p.id_pedido as id, p.direccion as cliente_direccion, u.nombre as cliente_nombre, u.email as cliente_email, m.nombre as medio_pago_nombre 
                           FROM pedidos p 
-                          LEFT JOIN usuarios u ON p.usuario_id = u.id 
-                          LEFT JOIN medios_pago m ON p.medio_pago_id = m.id 
-                          WHERE p.id = :id";
+                          LEFT JOIN usuarios u ON p.id_usuario = u.id 
+                          LEFT JOIN medios_pago m ON p.id_pago = m.id 
+                          WHERE p.id_pedido = :id";
             $resPedido = DataBase::query($sqlPedido, [':id' => $pedido_id]);
             $pedido = $resPedido[0] ?? null;
 
-            // Productos que componen el detalle del pedido uniendo con la tabla productos
-            $sqlDetalle = "SELECT dp.*, pr.nombre as producto_nombre, pr.precio as producto_precio 
-                           FROM detalle_producto dp 
-                           LEFT JOIN productos pr ON dp.producto_id = pr.id 
-                           WHERE dp.pedido_id = :pedido_id";
-            $detalles = DataBase::query($sqlDetalle, [':pedido_id' => $pedido_id]);
+            // 2. Productos que componen el detalle
+            // 2. Productos que componen el detalle
+               $sqlDetalle = "SELECT dp.*, pr.nombre_prenda as producto_nombre, pr.precio as producto_precio 
+               FROM detalle_producto dp 
+               LEFT JOIN productos pr ON dp.producto_id = pr.id 
+               WHERE dp.pedido_id = :pedido_id";
+               $detalles = DataBase::query($sqlDetalle, [':pedido_id' => $pedido_id]);
+           
+        
         }
+
 
         $datos = [
             "titulo" => "Detalle del Pedido #" . ($pedido_id ?? ''),

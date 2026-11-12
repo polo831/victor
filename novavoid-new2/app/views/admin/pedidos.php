@@ -22,6 +22,8 @@
                 <h1><?= $datos['titulo'] ?? 'Pedidos' ?></h1>
                 <hr>
 
+
+
                 <table>
                     <thead>
                         <tr>
@@ -33,6 +35,9 @@
                             <th>Acciones</th>
                         </tr>
                     </thead>
+
+
+                    
                     <tbody>
                         <?php if (!empty($datos['pedidos'])): ?>
                             <?php foreach ($datos['pedidos'] as $ped): ?>

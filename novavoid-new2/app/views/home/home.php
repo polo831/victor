@@ -31,33 +31,31 @@
                         </a>';
                 }
             ?>
-            <?php foreach ($categorias as $categoria): ?>
-                
-            <?php endforeach; ?>
         </div>
+
         <!-- Grilla de Productos -->
         <div class="row">
             <?php if (!empty($productos)): ?>
                 <?php foreach ($productos as $producto): ?>
                     <div class="col-md-4 mb-4">
                         <div class="card h-100 shadow-sm border-0">
-                            <img src="<?=$ruta?>img/productos/<?php echo htmlspecialchars($producto->imagen ?? ''); ?>" 
+                            <img src="<?=$ruta?>img/<?php echo htmlspecialchars($producto->imagen ?? ''); ?>" 
                                  class="card-img-top" 
                                  style="height: 280px; object-fit: cover;" 
                                  alt="Imagen del producto">
                             
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title fw-bold">
-                                 <a href="<?=$ruta?>productos/detalle/<?= $producto->id ?>" class="text-dark text-decoration-none link-secondary">
-                                    <?php echo htmlspecialchars($producto->nombre ?? 'Sin nombre'); ?>
-                                </a>
+                                 <a href="<?=$ruta?>productos/detalle/<?= $producto->id_producto ?>" class="text-dark text-decoration-none link-secondary">
+                                     <?php echo htmlspecialchars($producto->nombre_prenda ?? 'Sin nombre'); ?>
+                                 </a>
                                 </h5>
                                
                                 <p class="card-text text-muted small"><?php echo htmlspecialchars($producto->descripcion ?? ''); ?></p>
                                 
                                 <div class="mt-auto">
                                     <p class="fs-5 fw-bold text-dark mb-3">$<?php echo number_format($producto->precio ?? 0, 2, ',', '.'); ?></p>
-                                   <a href="#" data-producto="<?= $producto->id ?>" id="agregar" class="btn btn-dark w-100">Comprar</a>
+                                   <a href="#" data-producto="<?= $producto->id_producto ?>" class="btn btn-dark w-100">Comprar</a>
                                 </div>
                             </div>
                         </div>
@@ -70,8 +68,6 @@
             <?php endif; ?>
         </div>
     </div>
-
-</a>
 
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -48,6 +48,7 @@ class CarritoController extends Controller
     }
 
     /* Agregar producto al carrito mediante jQuery (Adaptado a tus columnas nuevas) */
+    /* Agregar producto al carrito mediante jQuery */
     public function actionagregar_producto_lista($var = null)
     {    
         $idProducto_para_agregar = $_POST['id_producto'] ?? null;
@@ -60,9 +61,9 @@ class CarritoController extends Controller
             return;
         }
 
-        // Compatibilidad robusta: lee tanto si viene como objeto (->nombre_prenda) como array (['nombre_prenda'])
-        $nombre = $producto[0]->nombre_prenda ?? $producto['nombre_prenda'] ?? $producto[0]->nombre ?? $producto['nombre'] ?? 'Producto';
-        $precio = $producto[0]->precio ?? $producto['precio'] ?? 0;
+        // Extracción limpia usando exclusivamente objetos (->) sincronizados con tu BD
+        $nombre = $producto->nombre_prenda ?? 'Producto';
+        $precio = $producto->precio ?? 0;
 
         if (!isset($_SESSION['carrito'])) {
             $_SESSION['carrito'] = [];
@@ -79,9 +80,11 @@ class CarritoController extends Controller
             ];
         }
 
-        $resultado['status'] = true;
-        echo json_encode($resultado);
+        // Redirigir directamente al carrito de compras
+        header("Location: " . self::$path . "carrito/index");
         exit;
+
+      
     }
 
     /* Eliminar producto del carrito */
@@ -140,9 +143,11 @@ class CarritoController extends Controller
                 ':total'       => $total
             ]);
 
-            // Obtener el ID del pedido recién insertado
-            $db = DataBase::connect();
-            $idPedido = $db->lastInsertId();
+            // Obtener el ID del pedido recién insertado de forma segura
+            $resId = DataBase::query("SELECT LAST_INSERT_ID() AS id");
+            $idPedido = is_array($resId) ? ($resId[0]->id ?? $resId[0]['id']) : ($resId->id ?? 0);
+
+         
 
             // Inserción en la tabla 'detalle_producto' (Sincronizado con tus tablas nuevas)
             foreach ($carrito as $item) {

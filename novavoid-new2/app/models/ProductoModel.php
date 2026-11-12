@@ -7,37 +7,35 @@ use \Model;
 
 class ProductoModel extends Model
 {
-	protected $table = "productos";
-	protected $primaryKey = "id";
+    protected $table = "productos";
+    protected $primaryKey = "id_producto"; // Actualizado a id_producto
 
-
-	public static function obtenerTodos() {
+    public static function obtenerTodos() {
         $model = new static();
 
-        /*falta estado en bd*/
-		$sql = "SELECT * FROM productos";
-		$result = DataBase::query($sql);
+        $sql = "SELECT * FROM productos";
+        $result = DataBase::query($sql);
 
-		return $result;
+        return $result;
     }
 
     public static function obtenerPorCategoria($id_categoria)
-	{
-		$model = new static();
-		$sql = "SELECT * FROM productos WHERE categoria_id = :id_categoria";
-		$params = [':id_categoria'   => $id_categoria];
-		$result = DataBase::query($sql,$params);
+    {
+        $model = new static();
+        // Corregido de categoria_id a id_categoria[cite: 1]
+        $sql = "SELECT * FROM productos WHERE id_categoria = :id_categoria";
+        $params = [':id_categoria' => $id_categoria];
+        $result = DataBase::query($sql, $params);
 
-		return $result;
-	}
+        return $result;
+    }
 
-	public static function obtenerPorId($id)
+    public static function obtenerPorId($id)
     {
         $sql = "SELECT * FROM productos WHERE id_producto = :id LIMIT 1";
         $params = [':id' => $id];
         $result = DataBase::query($sql, $params);
 
-        // Retorna la primera fila si viene en un array, o el resultado directo
         return is_array($result) && isset($result[0]) ? $result[0] : $result;
     }
 }

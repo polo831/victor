@@ -26,38 +26,37 @@
                 <?php if (!empty($datos['pedido'])): ?>
                     <div class="info-grid">
                         <div>
-                            <p><strong>Cliente:</strong> <?= htmlspecialchars($datos['pedido']->cliente_nombre) ?></p>
-                            <p><strong>Email:</strong> <?= htmlspecialchars($datos['pedido']->cliente_email) ?></p>
-                            <p><strong>Dirección de entrega:</strong> <?= htmlspecialchars($datos['pedido']->cliente_direccion) ?></p>
+                            <p><strong>Cliente:</strong> <?= htmlspecialchars($datos['pedido']->cliente_nombre ?? 'N/D') ?></p>
+                            <p><strong>Email:</strong> <?= htmlspecialchars($datos['pedido']->cliente_email ?? 'N/D') ?></p>
+                            <p><strong>Dirección de entrega:</strong> <?= htmlspecialchars($datos['pedido']->cliente_direccion ?? $datos['pedido']->direccion ?? 'N/D') ?></p>
                         </div>
                         <div>
-                            <p><strong>Fecha del Pedido:</strong> <?= htmlspecialchars($datos['pedido']->fecha) ?></p>
-                            <p><strong>Medio de Pago:</strong> <?= htmlspecialchars($datos['pedido']->medio_pago_nombre) ?></p>
-                            <p><strong>Total General:</strong> <span style="color: #28a745; font-size: 1.2em; font-weight: bold;">$<?= number_format($datos['pedido']->total, 2, ',', '.') ?></span></p>
+                            <p><strong>Fecha del Pedido:</strong> <?= htmlspecialchars($datos['pedido']->fecha ?? 'N/D') ?></p>
+                            <p><strong>Medio de Pago:</strong> <?= htmlspecialchars($datos['pedido']->medio_pago_nombre ?? 'N/D') ?></p>
+                            <p><strong>Total General:</strong> <span style="color: #28a745; font-size: 1.2em; font-weight: bold;">$<?= number_format($datos['pedido']->total ?? 0, 2, ',', '.') ?></span></p>
                         </div>
                     </div>
 
                     <div style="margin-top: 15px; background: #f8f9fa; padding: 15px; border-radius: 6px;">
-                    <form action="<?= $ruta ?>admin/actualizarEstadoPedido" method="POST">
-                    <input type="hidden" name="pedido_id" value="<?= $datos['pedido']->id ?>">
-        
-                    <div style="margin-bottom: 10px;">
-                    <label for="estado" style="font-weight: bold; display: block; margin-bottom: 5px;">Estado del Pedido:</label>
-                    <select name="estado" id="estado" style="padding: 6px; width: 100%; max-width: 300px; border-radius: 4px; border: 1px solid #ccc;">
-                    <option value="Pendiente" <?= ($datos['pedido']->estado ?? '') == 'Pendiente' ? 'selected' : '' ?>>Pendiente</option>
-                    <option value="En preparación" <?= ($datos['pedido']->estado ?? '') == 'En preparación' ? 'selected' : '' ?>>En preparación</option>
-                    <option value="Enviado" <?= ($datos['pedido']->estado ?? '') == 'Enviado' ? 'selected' : '' ?>>Enviado</option>
-                    <option value="Entregado" <?= ($datos['pedido']->estado ?? '') == 'Entregado' ? 'selected' : '' ?>>Entregado</option>
-                    <option value="Cancelado" <?= ($datos['pedido']->estado ?? '') == 'Cancelado' ? 'selected' : '' ?>>Cancelado</option>
-                    </select>
-                 </div>
+                        <form action="<?= $ruta ?>admin/actualizarEstadoPedido" method="POST">
+                            <input type="hidden" name="pedido_id" value="<?= $datos['pedido']->id ?>">
+                
+                            <div style="margin-bottom: 10px;">
+                                <label for="estado" style="font-weight: bold; display: block; margin-bottom: 5px;">Estado del Pedido:</label>
+                                <select name="estado" id="estado" style="padding: 6px; width: 100%; max-width: 300px; border-radius: 4px; border: 1px solid #ccc;">
+                                    <option value="Pendiente" <?= ($datos['pedido']->estado ?? '') == 'Pendiente' ? 'selected' : '' ?>>Pendiente</option>
+                                    <option value="En preparación" <?= ($datos['pedido']->estado ?? '') == 'En preparación' ? 'selected' : '' ?>>En preparación</option>
+                                    <option value="Enviado" <?= ($datos['pedido']->estado ?? '') == 'Enviado' ? 'selected' : '' ?>>Enviado</option>
+                                    <option value="Entregado" <?= ($datos['pedido']->estado ?? '') == 'Entregado' ? 'selected' : '' ?>>Entregado</option>
+                                    <option value="Cancelado" <?= ($datos['pedido']->estado ?? '') == 'Cancelado' ? 'selected' : '' ?>>Cancelado</option>
+                                </select>
+                            </div>
 
-                    <button type="submit" class="btn" style="background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                    ✉️ Actualizar Estado y Enviar Correo
-                 </button>
-                </form>
-            </div>
-
+                            <button type="submit" class="btn" style="background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                                ✉️ Actualizar Estado y Enviar Correo
+                            </button>
+                        </form>
+                    </div>
 
                 <?php else: ?>
                     <p>Pedido no encontrado.</p>
@@ -79,8 +78,8 @@
                         <?php if (!empty($datos['detalles'])): ?>
                             <?php foreach ($datos['detalles'] as $item): ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($item->producto_nombre ?? 'Producto desconocido') ?></td>
-                                    <td>$<?= number_format($item->producto_precio ?? 0, 2, ',', '.') ?></td>
+                                    <td><?= htmlspecialchars($item->producto_nombre ?? $item->nombre_prenda ?? 'Producto desconocido') ?></td>
+                                    <td>$<?= number_format($item->producto_precio ?? $item->precio ?? 0, 2, ',', '.') ?></td>
                                     <td><?= $item->cantidad ?></td>
                                     <td><strong>$<?= number_format($item->subtotal, 2, ',', '.') ?></strong></td>
                                 </tr>
