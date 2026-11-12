@@ -53,7 +53,10 @@
                         <label for="password" class="form-label fw-semibold">Contraseña</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
-                            <input type="password" id="password" name="password" required class="form-control border-start-0 ps-0" placeholder="••••••••">
+                            <input type="password" id="password" name="password" required class="form-control border-start-0 border-end-0 ps-0" placeholder="••••••••">
+                            <button class="btn btn-light border border-start-0 text-muted" type="button" id="togglePassword">
+                                <i class="bi bi-eye" id="toggleIcon"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -75,5 +78,22 @@
 
     <!-- Bootstrap 5 JS Bundle CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script para mostrar/ocultar contraseña -->
+    <script>
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const toggleIcon = document.getElementById('toggleIcon');
+
+        togglePassword.addEventListener('click', function () {
+            // Alternar el atributo type entre 'password' y 'text'
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Alternar el icono entre el ojo abierto y tachado
+            toggleIcon.classList.toggle('bi-eye');
+            toggleIcon.classList.toggle('bi-eye-slash');
+        });
+    </script>
 </body>
 </html>
