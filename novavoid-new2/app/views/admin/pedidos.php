@@ -6,20 +6,41 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 0; background-color: #f4f6f9; }
         .dashboard-container { display: flex; min-height: 100vh; }
-        .main-content { flex: 1; padding: 30px; }
+        .sidebar { width: 250px; background: #343a40; color: white; padding: 20px; }
+        .sidebar h2 { font-size: 20px; text-align: center; margin-bottom: 30px; }
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar ul li { padding: 10px 0; border-bottom: 1px solid #4f5962; }
+        .sidebar ul li a { color: white; text-decoration: none; display: block; }
+        .sidebar ul li a:hover { color: #17a2b8; }
+        .main-content { flex: 1; padding: 30px; overflow-x: auto; }
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #343a40; color: white; }
-        .btn { padding: 6px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 13px; display: inline-block; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #dee2e6; }
+        thead { background-color: #343a40; color: white; }
+        .btn { padding: 8px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 13px; display: inline-block; color: white; }
         .btn-info { background: #17a2b8; color: white; }
     </style>
 </head>
 <body>
     <div class="dashboard-container">
+        <!-- Menú lateral -->
+        <nav class="sidebar">
+            <h2>Panel Tienda</h2>
+            <ul>
+                <li><a href="<?= $ruta ?>admin/panel">Inicio</a></li>
+                <li><a href="<?= $ruta ?>admin/productos">Gestionar Productos (ABM)</a></li>
+                <li><a href="<?= $ruta ?>admin/usuarios">Gestionar Usuarios</a></li>
+                <li><a href="<?= $ruta ?>admin/pedidos">Gestionar Pedidos</a></li>
+                <li><a href="<?= $ruta ?>auth/logout">Cerrar Sesión</a></li>
+            </ul>
+        </nav>
+
+        <!-- Contenido principal -->
         <main class="main-content">
             <div class="card">
-                <h1><?= $datos['titulo'] ?? 'Pedidos' ?></h1>
+                <div style="margin-bottom: 20px;">
+                    <h1><?= htmlspecialchars($datos['titulo'] ?? 'Gestión de Pedidos') ?></h1>
+                </div>
                 <hr>
 
 

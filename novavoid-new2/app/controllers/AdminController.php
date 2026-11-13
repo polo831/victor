@@ -582,7 +582,7 @@ class AdminController extends Controller
             // 2. Productos que componen el detalle
                $sqlDetalle = "SELECT dp.*, pr.nombre_prenda as producto_nombre, pr.precio as producto_precio 
                FROM detalle_producto dp 
-               LEFT JOIN productos pr ON dp.producto_id = pr.id 
+               LEFT JOIN productos pr ON dp.producto_id = pr.id_producto
                WHERE dp.pedido_id = :pedido_id";
                $detalles = DataBase::query($sqlDetalle, [':pedido_id' => $pedido_id]);
            
@@ -624,14 +624,14 @@ class AdminController extends Controller
 
             if ($pedido_id) {
                 // 1. Actualizar el estado en la base de datos
-                $sql = "UPDATE pedidos SET estado = :estado WHERE id = :id";
+                $sql = "UPDATE pedidos SET estado = :estado WHERE id_pedido = :id";
                 DataBase::execute($sql, [':estado' => $nuevo_estado, ':id' => $pedido_id]);
 
                 // 2. Obtener los datos del cliente y su email para enviarle el correo
                 $sqlCliente = "SELECT p.*, u.nombre as cliente_nombre, u.email as cliente_email 
                                FROM pedidos p 
-                               LEFT JOIN usuarios u ON p.usuario_id = u.id 
-                               WHERE p.id = :id";
+                               LEFT JOIN usuarios u ON p.id_usuario = u.id 
+                               WHERE p.id_pedido = :id";
                 $resultado = DataBase::query($sqlCliente, [':id' => $pedido_id]);
                 $pedidoInfo = $resultado[0] ?? null;
 

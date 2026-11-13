@@ -55,7 +55,7 @@
                                 
                                 <div class="mt-auto">
                                     <p class="fs-5 fw-bold text-dark mb-3">$<?php echo number_format($producto->precio ?? 0, 2, ',', '.'); ?></p>
-                                   <a href="#" data-producto="<?= $producto->id_producto ?>" class="btn btn-dark w-100">Comprar</a>
+                                   <a href="#" data-producto="<?= $producto->id_producto ?>" id="agregar" class="btn btn-dark w-100">Comprar</a>
                                 </div>
                             </div>
                         </div>

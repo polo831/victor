@@ -81,8 +81,7 @@ class CarritoController extends Controller
         }
 
         // Redirigir directamente al carrito de compras
-        header("Location: " . self::$path . "carrito/index");
-        exit;
+         echo json_encode(['status' => true, 'mensaje' => 'Producto agregado']);
 
       
     }

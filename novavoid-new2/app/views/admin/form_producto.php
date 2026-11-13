@@ -26,15 +26,17 @@
 
     <div class="dashboard-container">
         <!-- Menú Lateral -->
-        <nav class="sidebar">
-            <h2>Panel Tienda</h2>
-            <ul>
-                <li><a href="<?$ruta ?> admin/panel">Inicio</a></li>
-                <li><a href="<?$ruta ?> admin/productos">Gestionar Productos (ABM)</a></li>
-                <li><a href="<?$ruta ?> admin/usuarios">Gestionar Usuarios</a></li>
-                <li><a href="http://localhost/victor/novavoid-new2/public/index.php?url=auth/logout">Cerrar Sesión</a></li>
-            </ul>
-        </nav>
+            <nav class="sidebar">
+    <h2>Panel Tienda</h2>
+    <ul>
+        <li><a href="<?=$ruta?>admin/panel">Inicio</a></li>
+        <li><a href="<?=$ruta?>admin/productos">Gestionar Productos </a></li>
+        <li><a href="<?=$ruta?>admin/usuarios">Gestionar Usuarios</a></li>
+        <li><a href="<?=$ruta?>admin/pedidos">Gestionar Pedidos</a></li>
+        <li><a href="index.php?url=auth/logout">Cerrar Sesión</a></li>
+    </ul>
+    </nav>
+
        
         <!-- Contenido Principal -->
         <main class="main-content">

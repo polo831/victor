@@ -26,6 +26,7 @@
         }
     </style>
     <?= $head ?>
+    <?=$js?>
 </head>
 <body>
 
@@ -63,11 +64,8 @@
                         </div>
                     </div>
 
-                    <!-- Botón de acción para el carrito -->
-                    <form action="<?= $ruta ?>carrito/agregar_producto_lista" method="POST">
                 <input type="hidden" name="id_producto" value="<?= $producto->id_producto ?>">
-                <button type="submit" class="btn btn-negro btn-lg w-100 py-3 shadow-sm">Agregar al Carrito</button>
-                </form>
+                <button type="button" id="agregar" data-producto="<?= $producto->id_producto ?>" class="btn btn-negro btn-lg w-100 py-3 shadow-sm">Agregar al Carrito</button>
 
                   
                 </div>

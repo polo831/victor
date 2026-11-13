@@ -39,7 +39,8 @@ class ProductosController extends Controller
             "menu" => SiteController::menu(),
             "menu_res" => SiteController::menu_res(),
             "producto"=>$producto,
-            "ruta"=>$ruta
+            "ruta"=>$ruta,
+             "js" => self::loadJS(["path" => self::$path], 'carrito'),
         ];
         
         Response::render($this->viewDir(__NAMESPACE__), $nombre_de_archivoDeVista, $parametros_de_vista);
