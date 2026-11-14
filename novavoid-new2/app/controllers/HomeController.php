@@ -27,11 +27,14 @@ class HomeController extends Controller
         /*traer categorias de bd para no hardcodear*/
         $categorias = CategoriaModel::obtenerTodasCategorias();
 
-        // 1. Capturamos la categoría seleccionada desde la URL (ej: ?categoria=remeras)
+        // 1. Capturamos búsqueda o categoría seleccionada desde la URL
         $categoriaSeleccionada = $_GET['categoria'] ?? null;
+        $terminoBusqueda = trim($_GET['buscar'] ?? '');
 
-        // 2. Evaluamos si hay un filtro activo o traemos todos los productos
-        if ($categoriaSeleccionada) {
+        // 2. Evaluamos si hay búsqueda activa, filtro por categoría o todos los productos
+        if (!empty($terminoBusqueda)) {
+            $productos = ProductoModel::buscarPorNombre($terminoBusqueda);
+        } elseif ($categoriaSeleccionada) {
             $productos = ProductoModel::obtenerPorCategoria($categoriaSeleccionada);
         } else {
             $productos = ProductoModel::obtenerTodos();

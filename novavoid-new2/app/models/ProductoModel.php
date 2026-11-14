@@ -38,4 +38,11 @@ class ProductoModel extends Model
 
         return is_array($result) && isset($result[0]) ? $result[0] : $result;
     }
+
+    public static function buscarPorNombre($termino)
+    {
+        $sql = "SELECT * FROM productos WHERE nombre_prenda LIKE :termino OR descripcion LIKE :termino";
+        $params = [':termino' => '%' . $termino . '%'];
+        return DataBase::query($sql, $params);
+    }
 }
