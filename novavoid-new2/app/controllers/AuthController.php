@@ -6,11 +6,11 @@ use \Controller;
 use \Response;
 use \DataBase;
 use app\models\UserModel;
-
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 class AuthController extends Controller
 {
-
     // Constructor
     public function __construct()
     {
@@ -24,9 +24,15 @@ class AuthController extends Controller
             static::path();
             $ruta = self::$path.'home';
             header("Location: $ruta");
+            exit();
         }
         $error = null;
-        $mensajeExito = isset($_GET['registrado']) ? "¡Registro exitoso! Ya puedes iniciar sesión." : null;
+        $mensajeExito = null;
+        if (isset($_GET['registrado'])) {
+            $mensajeExito = "¡Registro exitoso! Ya puedes iniciar sesión.";
+        } elseif (isset($_GET['recuperado'])) {
+            $mensajeExito = "¡Contraseña actualizada! Te enviamos un correo de confirmación.";
+        }
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $email = trim($_POST['email'] ?? '');
@@ -39,11 +45,10 @@ class AuthController extends Controller
                     $logueo = SessionController::setSessionData($email);
 
                     if ($logueo === true) {
-
-                    
                         static::path();
                         $ruta = self::$path.'home';
                         header("Location: $ruta");
+                        exit();
                     }
                 } else {
                     $error = "Correo electrónico o contraseña incorrectos.";
@@ -55,7 +60,7 @@ class AuthController extends Controller
 
         static::path();
         $nombre_de_archivoDeVista = 'login';
-       $parametros_de_vista = [
+        $parametros_de_vista = [
             "head" => SiteController::head(),
             "header" => SiteController::header(),
             "topbar" => SiteController::topbar(),
@@ -92,12 +97,8 @@ class AuthController extends Controller
                     if (!preg_match($patron_seguridad, $password)) {
                         $error = "La contraseña debe tener al menos 8 caracteres, una letra mayúscula, un número y un símbolo especial.";
                     } else {
-                        // 3. Hashear contraseña de forma segura
-                        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-
-                        // 4. Registrar en el modelo (Asegúrate de que UserModel::registrar acepte estos parámetros)
-                      // En AuthController.php (acción actionRegister)
-                           $exito = UserModel::registrar($nombre, $email, $password, $direccion, $telefono);
+                        // 3. Registrar en el modelo
+                        $exito = UserModel::registrar($nombre, $email, $password, $direccion, $telefono);
 
                         if ($exito) {
                             static::path();
@@ -116,7 +117,7 @@ class AuthController extends Controller
 
         static::path();
         $nombre_de_archivoDeVista = 'registro';
-       $parametros_de_vista = [
+        $parametros_de_vista = [
             "head" => SiteController::head(),
             "header" => SiteController::header(),
             "topbar" => SiteController::topbar(),
@@ -129,16 +130,16 @@ class AuthController extends Controller
     }
 
     /*cerrar sesion*/
-
     public function actionLogout(){
         session_destroy();
         static::path();
         $ruta = self::$path.'auth/login/';
         $_SESSION['SESSION']['STATUS'] = false;
         header("Location: $ruta");
+        exit();
     }
 
-    /*recuperar contraseña*/
+   /*recuperar contraseña*/
     public function actionProcesarRecuperar() {
         $error = null;
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -153,21 +154,58 @@ class AuthController extends Controller
                 if (!preg_match($patron_seguridad, $nueva_password)) {
                     $error = "La nueva contraseña no cumple con los requisitos de seguridad.";
                 } else {
-                    $passwordHash = password_hash($nueva_password, PASSWORD_DEFAULT);
+                    // Verificar que el correo exista antes de actualizar y mandar el mail
+                    $usuarioExiste = UserModel::findEmail($email);
 
-                    // Actualizar contraseña en el modelo (asegúrate de crear este método en UserModel)
-                    // UserModel::actualizarPasswordPorEmail($email, $passwordHash);
+                    if (!$usuarioExiste) {
+                        $error = "No existe ninguna cuenta registrada con ese correo electrónico.";
+                    } else {
+                        $passwordHash = password_hash($nueva_password, PASSWORD_DEFAULT);
 
-                   static::path();
-                    $ruta = self::$path.'auth/login?recuperado=1';
-                    header("Location: $ruta");
-                    exit();
+                        // Actualizar contraseña en el modelo
+                        UserModel::actualizarPasswordPorEmail($email, $passwordHash);
+
+                        // --- ENVÍO DE CORREO CON PHPMAILER ---
+                        $mail = new PHPMailer(true);
+                        try {
+                            $mail->isSMTP();
+                            $mail->Host       = 'smtp.gmail.com';
+                            $mail->SMTPAuth   = true;
+                            $mail->Username   = 'voidnova04@gmail.com';
+                            $mail->Password   = 'kjrybizdawrdfjdc';
+                            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                            $mail->Port       = 587;
+                            $mail->CharSet    = 'UTF-8';
+
+                            $mail->setFrom('voidnova04@gmail.com', 'Nova Void Store');
+                            $mail->addAddress($email);
+
+                            $mail->isHTML(true);
+                            $mail->Subject = 'Recuperación de contraseña - Nova Void Store';
+                            $mail->Body    = "
+                                <h2>Recuperación de Acceso</h2>
+                                <p>Hola, tu contraseña en <strong>Nova Void Store</strong> fue actualizada correctamente.</p>
+                                <p>Si no realizaste este cambio, comunícate con nosotros de inmediato.</p>
+                            ";
+                            $mail->AltBody = 'Tu contraseña en Nova Void Store fue actualizada correctamente.';
+
+                            $mail->send();
+                        } catch (Exception $e) {
+                            // Si falla el envío, continúa sin frenar la redirección
+                        }
+                        // -------------------------------------
+
+                        static::path();
+                        $ruta = self::$path.'auth/login?recuperado=1';
+                        header("Location: $ruta");
+                        exit();
+                    }
                 }
             }
         }
-         static::path();
+        static::path();
         $nombre_de_archivoDeVista = 'recuperar';
-       $parametros_de_vista = [
+        $parametros_de_vista = [
             "head" => SiteController::head(),
             "header" => SiteController::header(),
             "topbar" => SiteController::topbar(),
@@ -177,5 +215,6 @@ class AuthController extends Controller
             "ruta" => self::$path,
         ];
         Response::render($this->viewDir(__NAMESPACE__), $nombre_de_archivoDeVista, $parametros_de_vista);
+
     }
 }

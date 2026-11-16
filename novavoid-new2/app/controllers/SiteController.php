@@ -71,22 +71,26 @@ class SiteController extends Controller
 	            $cartCount += (int)($item['cantidad'] ?? 1);
 	        }
 	    }
+		// Submenú de categorías para el menú lateral (drawer)
+        $categoriasSubmenu = '';
+        try {
+            if (class_exists('app\models\CategoriaModel')) {
+                $categorias = \app\models\CategoriaModel::obtenerTodasCategorias();
+                if (!empty($categorias)) {
+                    foreach ($categorias as $cat) {
+                        $idCat = $cat->id_categoria ?? $cat->id ?? '';
+                        $nomCat = htmlspecialchars($cat->nombre_categoria ?? $cat->nombre ?? '');
+                        $categoriasSubmenu .= '<a href="' . static::$path . 'productos/catalogo?categoria=' . $idCat . '" class="drawer-sublink">' . $nomCat . '</a>';
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $categoriasSubmenu = '';
+        }
 
-	    // Submenú de categorías para el menú lateral (drawer)
-	    $categoriasSubmenu = '';
-	    try {
-	        if (class_exists('app\models\CategoriaModel')) {
-	            $categorias = \app\models\CategoriaModel::obtenerTodasCategorias();
-	            if (!empty($categorias)) {
-	                foreach ($categorias as $cat) {
-	                    $idCat = $cat->id_categoria ?? $cat->id ?? '';
-	                    $nomCat = htmlspecialchars($cat->nombre_categoria ?? $cat->nombre ?? '');
-	                    $categoriasSubmenu .= '<a href="' . static::$path . 'productos?categoria=' . $idCat . '" class="drawer-sublink">' . $nomCat . '</a>';
-	                }
-	            }
-	        }
-	    } catch (\Throwable $e) {}
 
+
+		
 	    // Construir dinámicamente el fragmento HTML según la sesión
 	    if ($isLogged) {
 	        $authSection = '

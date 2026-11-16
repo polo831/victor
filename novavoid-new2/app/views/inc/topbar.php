@@ -6,7 +6,6 @@
         --color-header-hover: #434032;
     }
 
-    /* Barra de promociones superior */
     .announcement-bar {
         background-color: var(--color-anuncio);
         color: #ffffff;
@@ -17,7 +16,6 @@
         text-align: center;
     }
 
-    /* Header principal */
     .store-header {
         background-color: var(--color-header);
         color: #ffffff;
@@ -36,7 +34,6 @@
         margin: 0 auto;
     }
 
-    /* Sección Izquierda: Botón Hamburguesa y Buscador */
     .header-left {
         display: flex;
         align-items: center;
@@ -104,7 +101,6 @@
         align-items: center;
     }
 
-    /* Sección Centro: Logo */
     .header-center {
         flex: 1;
         text-align: center;
@@ -135,7 +131,6 @@
         display: block;
     }
 
-    /* Sección Derecha: Carrito */
     .header-right {
         display: flex;
         align-items: center;
@@ -176,7 +171,6 @@
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
     }
 
-    /* Menú Lateral (Offcanvas Drawer) */
     .offcanvas-giusto {
         width: 320px !important;
         border: none;
@@ -294,7 +288,7 @@
                 </svg>
             </button>
 
-            <form action="#PATH#productos" method="GET" class="header-search">
+            <form action="#PATH#productos/catalogo" method="GET" class="header-search">
                 <input type="text" name="buscar" placeholder="Buscar">
                 <button type="submit" class="header-search-btn" aria-label="Buscar">
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
@@ -340,14 +334,14 @@
             </li>
             <li class="drawer-menu-item">
                 <div class="d-flex justify-content-between align-items-center">
-                    <a class="drawer-link flex-grow-1" href="#PATH#productos">Productos</a>
+                    <a class="drawer-link flex-grow-1" href="#PATH#productos/catalogo">Productos</a>
                     <button class="btn btn-link text-dark p-2 border-0 shadow-none text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseProductosDrawer" aria-expanded="false" aria-controls="collapseProductosDrawer" aria-label="Ver categorías">
                         <span class="drawer-chevron">↓</span>
                     </button>
                 </div>
                 <div class="collapse" id="collapseProductosDrawer">
                     <div class="drawer-submenu">
-                        <a href="#PATH#productos" class="drawer-sublink fw-bold">Ver todos los productos</a>
+                        <a href="#PATH#productos/catalogo" class="drawer-sublink fw-bold">Ver todos los productos</a>
                         #CATEGORIAS_SUBMENU#
                     </div>
                 </div>
