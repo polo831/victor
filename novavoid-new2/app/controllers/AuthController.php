@@ -16,16 +16,22 @@ class AuthController extends Controller
     {
         self::$sessionStatus = SessionController::sessionVerificacion();
     }
-
-    /*iniciar sesion*/
-    public function actionLogin() {
-        /*para que no vuelva a iniciar sesion*/
+public function actionLogin() {
+        /* 1. Si ya tiene sesión iniciada, redirigir según su rol */
         if (self::$sessionStatus === "Online") {
             static::path();
-            $ruta = self::$path.'home';
+            // Verifica cómo guarda el rol tu SessionController (ej. $_SESSION['USER']['rol'] o $_SESSION['rol'])
+            $rolSesion = $_SESSION['USER']['rol'] ?? $_SESSION['rol'] ?? null;
+            
+            if ($rolSesion == 1 || $rolSesion === 'admin') {
+                $ruta = self::$path . 'admin/panel';
+            } else {
+                $ruta = self::$path . 'home';
+            }
             header("Location: $ruta");
             exit();
         }
+
         $error = null;
         $mensajeExito = null;
         if (isset($_GET['registrado'])) {
@@ -41,12 +47,18 @@ class AuthController extends Controller
             if (!empty($email) && !empty($password)) {
                 $usuario = UserModel::login($email, $password);
                 if ($usuario) {
-                    /*guarda todos los datos de sesion*/
                     $logueo = SessionController::setSessionData($email);
 
                     if ($logueo === true) {
                         static::path();
-                        $ruta = self::$path.'home';
+
+                        // 2. Apuntar exactamente a 'admin/panel'
+                        if (isset($usuario->rol) && ($usuario->rol == 1 || $usuario->rol === 'admin')) {
+                            $ruta = self::$path . 'admin/panel';
+                        } else {
+                            $ruta = self::$path . 'home';
+                        }
+
                         header("Location: $ruta");
                         exit();
                     }
@@ -57,6 +69,11 @@ class AuthController extends Controller
                 $error = "Por favor completa todos los campos.";
             }
         }
+        // ... resto de tu vista login ...
+
+
+   
+        
 
         static::path();
         $nombre_de_archivoDeVista = 'login';
