@@ -4,22 +4,32 @@
 	function inicializarEventos() {
 		$(document).on('click', '#agregar', function() {	
 			let id_producto = $(this).attr('data-producto');
+			let talle = $('#talleSeleccionado').val() || $(this).attr('data-talle') || '';
+			let color = $('#colorSeleccionado').val() || $(this).attr('data-color') || '';
 			let cantidad = 1;
 
-			console.log(id_producto)
-			console.log(cantidad)
+			console.log(id_producto);
+			console.log(talle);
+			console.log(color);
+			console.log(cantidad);
+
 			$.ajax({
 		        url: '#path#carrito/agregar_producto_lista',
 		        type: 'POST',
 		        dataType: 'json',
-		        data: {id_producto:id_producto,cantidad:cantidad},
+		        data: {
+		        	id_producto: id_producto,
+		        	talle: talle,
+		        	color: color,
+		        	cantidad: cantidad
+		        },
 		    })
 		    .done(function(response) {
 		        console.log("success");
 		        console.log(response.status);
 		        if(response.status == true){
-					alert('producto agregado')
-					window.location.reload()
+					alert('producto agregado');
+					window.location.reload();
 				}
 		    })
 		    .fail(function(response) {
@@ -43,8 +53,8 @@
 			console.log("success");
 			console.log(response);
 			if(response.status == true){
-				alert('producto eliminado')
-				window.location.reload()
+				alert('producto eliminado');
+				window.location.reload();
 			}
 			console.log("paso bien por aca eliminar producto");
 		})

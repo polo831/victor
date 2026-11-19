@@ -69,6 +69,8 @@
                     <thead>
                         <tr>
                             <th>Producto</th>
+                            <th>Talle</th>
+                            <th>Color</th>
                             <th>Precio Unitario</th>
                             <th>Cantidad</th>
                             <th>Subtotal</th>
@@ -79,13 +81,15 @@
                             <?php foreach ($datos['detalles'] as $item): ?>
                                 <tr>
                                     <td><?= htmlspecialchars($item->producto_nombre ?? $item->nombre_prenda ?? 'Producto desconocido') ?></td>
+                                    <td><?= htmlspecialchars($item->talle ?? 'N/D') ?></td>
+                                    <td><?= htmlspecialchars($item->color ?? 'N/D') ?></td>
                                     <td>$<?= number_format($item->producto_precio ?? $item->precio ?? 0, 2, ',', '.') ?></td>
                                     <td><?= $item->cantidad ?></td>
                                     <td><strong>$<?= number_format($item->subtotal, 2, ',', '.') ?></strong></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <tr><td colspan="4" style="text-align: center;">No hay detalles para este pedido.</td></tr>
+                            <tr><td colspan="6" style="text-align: center;">No hay detalles para este pedido.</td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>

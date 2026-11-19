@@ -47,12 +47,13 @@ class CarritoController extends Controller
         Response::render($this->viewDir(__NAMESPACE__), $nombre_de_archivoDeVista, $parametros_de_vista);
     }
 
-    /* Agregar producto al carrito mediante jQuery (Adaptado a tus columnas nuevas) */
     /* Agregar producto al carrito mediante jQuery */
     public function actionagregar_producto_lista($var = null)
     {    
         $idProducto_para_agregar = $_POST['id_producto'] ?? null;
         $cantidad_enviada = isset($_POST['cantidad']) ? (int)$_POST['cantidad'] : 1;
+        $talle = trim($_POST['talle'] ?? '');
+        $color = trim($_POST['color'] ?? '');
 
         $producto = ProductoModel::obtenerPorId($idProducto_para_agregar);
 
@@ -61,7 +62,6 @@ class CarritoController extends Controller
             return;
         }
 
-        // Extracción limpia usando exclusivamente objetos (->) sincronizados con tu BD
         $nombre = $producto->nombre_prenda ?? 'Producto';
         $precio = $producto->precio ?? 0;
 
@@ -69,21 +69,23 @@ class CarritoController extends Controller
             $_SESSION['carrito'] = [];
         }
 
-        if (isset($_SESSION['carrito'][$idProducto_para_agregar])) {
-            $_SESSION['carrito'][$idProducto_para_agregar]['cantidad'] += $cantidad_enviada;
+        // Clave única por producto + talle + color para no mezclar distintos talles o colores
+        $claveItem = $idProducto_para_agregar . '_' . ($talle !== '' ? $talle : 'unico') . '_' . ($color !== '' ? $color : 'default');
+
+        if (isset($_SESSION['carrito'][$claveItem])) {
+            $_SESSION['carrito'][$claveItem]['cantidad'] += $cantidad_enviada;
         } else {
-            $_SESSION['carrito'][$idProducto_para_agregar] = [
+            $_SESSION['carrito'][$claveItem] = [
                 'id'       => $idProducto_para_agregar,
                 'nombre'   => $nombre,
+                'talle'    => $talle !== '' ? $talle : null,
+                'color'    => $color !== '' ? $color : null,
                 'precio'   => $precio,
                 'cantidad' => $cantidad_enviada
             ];
         }
 
-        // Redirigir directamente al carrito de compras
-         echo json_encode(['status' => true, 'mensaje' => 'Producto agregado']);
-
-      
+        echo json_encode(['status' => true, 'mensaje' => 'Producto agregado']);
     }
 
     /* Eliminar producto del carrito */
@@ -131,7 +133,7 @@ class CarritoController extends Controller
                 $total += $item['precio'] * $item['cantidad'];
             }
 
-            // Inserción en la tabla 'pedidos' (Usando id_usuario e id_pago reales)
+            // Inserción en la tabla 'pedidos'
             $sqlPedido = "INSERT INTO pedidos (id_usuario, id_pago, direccion, total, fecha) 
                           VALUES (:id_usuario, :id_pago, :direccion, :total, NOW())";
             
@@ -146,16 +148,16 @@ class CarritoController extends Controller
             $resId = DataBase::query("SELECT LAST_INSERT_ID() AS id");
             $idPedido = is_array($resId) ? ($resId[0]->id ?? $resId[0]['id']) : ($resId->id ?? 0);
 
-         
-
-            // Inserción en la tabla 'detalle_producto' (Sincronizado con tus tablas nuevas)
+            // Inserción en la tabla 'detalle_producto' con talle y color
             foreach ($carrito as $item) {
-                $sqlDetalle = "INSERT INTO detalle_producto (pedido_id, producto_id, cantidad, subtotal) 
-                               VALUES (:pedido_id, :producto_id, :cantidad, :subtotal)";
+                $sqlDetalle = "INSERT INTO detalle_producto (pedido_id, producto_id, talle, color, cantidad, subtotal) 
+                               VALUES (:pedido_id, :producto_id, :talle, :color, :cantidad, :subtotal)";
                 
                 DataBase::execute($sqlDetalle, [
                     ':pedido_id'   => $idPedido,
                     ':producto_id' => $item['id'],
+                    ':talle'       => $item['talle'] ?? null,
+                    ':color'       => $item['color'] ?? null,
                     ':cantidad'    => $item['cantidad'],
                     ':subtotal'    => $item['precio'] * $item['cantidad']
                 ]);
