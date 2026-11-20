@@ -17,13 +17,13 @@ class ProductosController extends Controller
     }
 
     /* Método por defecto para la ruta /productos */
-    public function actionIndex()
+    public function actionIndex($var = null)
     {
-        return $this->actioncatalogo();
+        return $this->actioncatalogo($var);
     }
 
     /* Vista limpia del catálogo completo y filtrado por categoría/búsqueda */
-    public function actioncatalogo()
+    public function actioncatalogo($var = null)
     {
         static::path();
         $ruta = self::$path;
