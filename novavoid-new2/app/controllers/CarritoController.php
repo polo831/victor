@@ -8,6 +8,7 @@ use \DataBase;
 use app\models\UserModel;
 use app\models\ProductoModel;
 use app\models\CategoriaModel;
+use app\models\PedidoModel;
 
 class CarritoController extends Controller
 {
@@ -128,40 +129,8 @@ class CarritoController extends Controller
                 exit();
             }
 
-            $total = 0;
-            foreach ($carrito as $item) {
-                $total += $item['precio'] * $item['cantidad'];
-            }
-
-            // Inserción en la tabla 'pedidos'
-            $sqlPedido = "INSERT INTO pedidos (id_usuario, id_pago, direccion, total, fecha) 
-                          VALUES (:id_usuario, :id_pago, :direccion, :total, NOW())";
-            
-            DataBase::execute($sqlPedido, [
-                ':id_usuario'  => $idUsuario,
-                ':id_pago'     => $medioPagoId,
-                ':direccion'   => $direccion,
-                ':total'       => $total
-            ]);
-
-            // Obtener el ID del pedido recién insertado de forma segura
-            $resId = DataBase::query("SELECT LAST_INSERT_ID() AS id");
-            $idPedido = is_array($resId) ? ($resId[0]->id ?? $resId[0]['id']) : ($resId->id ?? 0);
-
-            // Inserción en la tabla 'detalle_producto' con talle y color
-            foreach ($carrito as $item) {
-                $sqlDetalle = "INSERT INTO detalle_producto (pedido_id, producto_id, talle, color, cantidad, subtotal) 
-                               VALUES (:pedido_id, :producto_id, :talle, :color, :cantidad, :subtotal)";
-                
-                DataBase::execute($sqlDetalle, [
-                    ':pedido_id'   => $idPedido,
-                    ':producto_id' => $item['id'],
-                    ':talle'       => $item['talle'] ?? null,
-                    ':color'       => $item['color'] ?? null,
-                    ':cantidad'    => $item['cantidad'],
-                    ':subtotal'    => $item['precio'] * $item['cantidad']
-                ]);
-            }
+            // Delegación de la persistencia del pedido y sus detalles al modelo PedidoModel
+            $idPedido = PedidoModel::registrarPedidoCompleto($idUsuario, $medioPagoId, $direccion, $carrito);
 
             // Vaciar el carrito tras el éxito
             unset($_SESSION['carrito']);

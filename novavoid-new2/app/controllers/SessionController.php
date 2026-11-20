@@ -51,20 +51,16 @@ class SessionController extends Controller
 
     public static function onlyAdmins(){
         static::path();
-        $continuar = false;
-        $ruta = self::$path.'home/404';
-        if (self::$sessionStatus === 'OffLine') {
-            header("Location: $ruta");
-        }elseif(self::$sessionStatus === 'Online'){
-            if ($_SESSION['USER']['type'] !=  'administrador') {
-                header("Location: $ruta");
-            }else{
-                $continuar = true;
-            }
-        }
-        return $continuar;
+        self::$sessionStatus = self::sessionVerificacion();
+        $rolSesion = $_SESSION['USER']['rol'] ?? $_SESSION['rol'] ?? null;
+        $esAdmin = ($rolSesion == 1 || $rolSesion === 'admin');
 
-        
+        // Si no está logueado o no es administrador, redirigir al login
+        if (self::$sessionStatus !== 'Online' || !$esAdmin) {
+            header("Location: " . self::$path . "auth/login");
+            exit();
+        }
+        return true;
     }
 
     public static function onlyUsers(){

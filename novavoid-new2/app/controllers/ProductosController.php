@@ -16,6 +16,12 @@ class ProductosController extends Controller
         self::$sessionStatus = SessionController::sessionVerificacion();
     }
 
+    /* Método por defecto para la ruta /productos */
+    public function actionIndex()
+    {
+        return $this->actioncatalogo();
+    }
+
     /* Vista limpia del catálogo completo y filtrado por categoría/búsqueda */
     public function actioncatalogo()
     {

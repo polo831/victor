@@ -113,7 +113,7 @@
 
         <ul>
             <li><a href="<?= $ruta ?>admin/panel">Inicio</a></li>
-            <li><a href="<?= $ruta ?>admin/productos">Gestionar Productos (ABM)</a></li>
+            <li><a href="<?= $ruta ?>admin/productos">Gestionar Productos </a></li>
             <li><a href="<?= $ruta ?>admin/usuarios">Gestionar Usuarios</a></li>
             <li><a href="<?= $ruta ?>admin/pedidos">Gestionar Pedidos</a></li>
             <li>

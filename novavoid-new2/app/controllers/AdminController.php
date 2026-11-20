@@ -15,6 +15,7 @@ class AdminController extends Controller
     public function __construct()
     {
         self::$sessionStatus = SessionController::sessionVerificacion();
+        SessionController::onlyAdmins();
     }
 
     /*recibo el id del producto mediante el parametro*/
