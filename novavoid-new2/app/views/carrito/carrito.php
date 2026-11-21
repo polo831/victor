@@ -43,10 +43,12 @@
         <a href="<?=$ruta?>home" class="btn btn-dark mt-3">Ver Productos</a>
     <?php else: ?>
         <div class="table-responsive mt-4">
-            <table class="table table-bordered align-middle">
+            <table class="table table-bordered align-middle text-center">
                 <thead class="table-dark">
                     <tr>
-                        <th>Producto</th>
+                        <th class="text-start">Producto</th>
+                        <th>Talle</th>
+                        <th>Color</th>
                         <th>Precio</th>
                         <th>Cantidad</th>
                         <th>Subtotal</th>
@@ -56,12 +58,26 @@
                 <tbody>
                     <?php foreach ($_SESSION['carrito'] as $id => $item): ?>
                         <tr>
-                            <td><?= htmlspecialchars($item['nombre'] ?? 'Producto #' . $id); ?></td>
+                            <td class="text-start fw-semibold"><?= htmlspecialchars($item['nombre'] ?? 'Producto #' . $id); ?></td>
+                            <td>
+                                <?php if (!empty($item['talle'])): ?>
+                                    <span class="badge bg-dark px-2 py-1"><?= htmlspecialchars($item['talle']); ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if (!empty($item['color'])): ?>
+                                    <span class="badge bg-secondary px-2 py-1"><?= htmlspecialchars($item['color']); ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
                             <td>$<?= number_format($item['precio'], 2, ',', '.'); ?></td>
                             <td><?= $item['cantidad']; ?></td>
-                            <td>$<?= number_format($item['precio'] * $item['cantidad'], 2, ',', '.'); ?></td>
+                            <td class="fw-bold">$<?= number_format($item['precio'] * $item['cantidad'], 2, ',', '.'); ?></td>
                             <td>
-                                <a href="" onclick="eliminar_de_lista(<?=$id?>)" class="btn btn-danger btn-sm">Eliminar</a>
+                                <button type="button" onclick="eliminar_de_lista('<?= htmlspecialchars($id) ?>')" class="btn btn-danger btn-sm">Eliminar</button>
                             </td>
                         </tr>
                     <?php endforeach; ?>

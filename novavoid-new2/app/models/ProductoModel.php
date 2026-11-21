@@ -45,4 +45,128 @@ class ProductoModel extends Model
         $params = [':termino' => '%' . $termino . '%'];
         return DataBase::query($sql, $params);
     }
+
+    public static function obtenerProductosConStock()
+    {
+        $sql = "
+            SELECT
+                p.*,
+                s.cantidad AS stock,
+                c.nombre_categoria AS categoria_nombre
+            FROM productos p
+            LEFT JOIN stock s
+                ON p.id_producto = s.producto_id
+            LEFT JOIN categorias c
+                ON p.id_categoria = c.id_categoria
+            ORDER BY p.id_producto DESC
+        ";
+        return DataBase::query($sql);
+    }
+
+    public static function obtenerConStockPorId($id)
+    {
+        $sql = "
+            SELECT
+                p.*,
+                s.cantidad AS stock
+            FROM productos p
+            LEFT JOIN stock s
+                ON p.id_producto = s.producto_id
+            WHERE p.id_producto = :id
+            LIMIT 1
+        ";
+        $resultado = DataBase::query($sql, [':id' => $id]);
+        return is_array($resultado) && isset($resultado[0]) ? $resultado[0] : null;
+    }
+
+    public static function existeProducto($id)
+    {
+        $sql = "SELECT id_producto FROM productos WHERE id_producto = :id LIMIT 1";
+        $result = DataBase::query($sql, [':id' => $id]);
+        return !empty($result);
+    }
+
+    public static function guardarProductoConStock($datos, $id = null)
+    {
+        $nombre = $datos['nombre'];
+        $precio = $datos['precio'];
+        $idCategoria = $datos['id_categoria'];
+        $stockCantidad = $datos['stock'];
+        $imagen = $datos['imagen'] ?? null;
+
+        if ($id !== null) {
+            // Actualización
+            if ($imagen !== null) {
+                $sql = "UPDATE productos
+                        SET nombre_prenda = :nombre,
+                            precio = :precio,
+                            id_categoria = :id_categoria,
+                            imagen = :imagen
+                        WHERE id_producto = :id";
+                $params = [
+                    ':nombre' => $nombre,
+                    ':precio' => $precio,
+                    ':id_categoria' => $idCategoria,
+                    ':imagen' => $imagen,
+                    ':id' => $id
+                ];
+            } else {
+                $sql = "UPDATE productos
+                        SET nombre_prenda = :nombre,
+                            precio = :precio,
+                            id_categoria = :id_categoria
+                        WHERE id_producto = :id";
+                $params = [
+                    ':nombre' => $nombre,
+                    ':precio' => $precio,
+                    ':id_categoria' => $idCategoria,
+                    ':id' => $id
+                ];
+            }
+            DataBase::execute($sql, $params);
+
+            // Actualización o inserción de stock
+            $checkStock = DataBase::query("SELECT id FROM stock WHERE producto_id = :id", [':id' => $id]);
+            if (!empty($checkStock)) {
+                DataBase::execute("UPDATE stock SET cantidad = :cantidad WHERE producto_id = :id", [
+                    ':cantidad' => $stockCantidad,
+                    ':id' => $id
+                ]);
+            } else {
+                DataBase::execute("INSERT INTO stock (producto_id, cantidad) VALUES (:id, :cantidad)", [
+                    ':id' => $id,
+                    ':cantidad' => $stockCantidad
+                ]);
+            }
+            return $id;
+        } else {
+            // Creación
+            DataBase::execute(
+                "INSERT INTO productos (nombre_prenda, precio, id_categoria, imagen)
+                 VALUES (:nombre, :precio, :id_categoria, :imagen)",
+                [
+                    ':nombre' => $nombre,
+                    ':precio' => $precio,
+                    ':id_categoria' => $idCategoria,
+                    ':imagen' => $imagen ?? 'no-image.png'
+                ]
+            );
+            $res = DataBase::query("SELECT LAST_INSERT_ID() AS id_producto");
+            $productoId = is_array($res) ? ($res[0]->id_producto ?? null) : ($res->id_producto ?? null);
+
+            if ($productoId) {
+                DataBase::execute(
+                    "INSERT INTO stock (producto_id, cantidad) VALUES (:id, :cantidad)",
+                    [':id' => $productoId, ':cantidad' => $stockCantidad]
+                );
+            }
+            return $productoId;
+        }
+    }
+
+    public static function eliminarProductoConStock($id)
+    {
+        DataBase::execute("DELETE FROM stock WHERE producto_id = :id", [':id' => $id]);
+        return DataBase::execute("DELETE FROM productos WHERE id_producto = :id", [':id' => $id]);
+    }
 }

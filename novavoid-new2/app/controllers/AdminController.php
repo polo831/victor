@@ -4,8 +4,10 @@ namespace app\controllers;
 
 use \Controller;
 use \Response;
-use \DataBase;
 use app\models\UserModel;
+use app\models\ProductoModel;
+use app\models\CategoriaModel;
+use app\models\PedidoModel;
 
 
 class AdminController extends Controller
@@ -15,7 +17,10 @@ class AdminController extends Controller
     public function __construct()
     {
         self::$sessionStatus = SessionController::sessionVerificacion();
-        SessionController::onlyAdmins();
+        $action = $_GET['url'] ?? '';
+        if (strpos($action, 'admin/login') === false && strpos($action, 'admin/loguin') === false) {
+            SessionController::onlyAdmins();
+        }
     }
 
     /*recibo el id del producto mediante el parametro*/
@@ -50,18 +55,7 @@ class AdminController extends Controller
         SessionController::onlyUsers();
         $ruta = self::$path;
 
-        $productos = DataBase::query("
-            SELECT
-                p.*,
-                s.cantidad AS stock,
-                c.nombre_categoria AS categoria_nombre
-            FROM productos p
-            LEFT JOIN stock s
-                ON p.id_producto = s.producto_id
-            LEFT JOIN categorias c
-                ON p.id_categoria = c.id_categoria
-            ORDER BY p.id_producto DESC
-        ");
+        $productos = ProductoModel::obtenerProductosConStock();
 
         $datos = [
             "titulo" => "Gestión de Productos",
@@ -95,8 +89,8 @@ class AdminController extends Controller
     SessionController::onlyUsers();
     $ruta = self::$path;
 
-    // 1. Obtener las categorías de la base de datos para el desplegable
-    $categorias = DataBase::query("SELECT * FROM categorias");
+    // 1. Obtener las categorías de la base de datos para el desplegable desde CategoriaModel
+    $categorias = CategoriaModel::obtenerTodasCategorias();
 
     $datos = [
         "titulo" => "Nuevo Producto",
@@ -129,25 +123,10 @@ class AdminController extends Controller
         $producto = null;
 
         if ($id !== null && $id > 0) {
-
-            $resultado = DataBase::query("
-                SELECT
-                    p.*,
-                    s.cantidad AS stock
-                FROM productos p
-                LEFT JOIN stock s
-                    ON p.id_producto = s.producto_id
-                WHERE p.id_producto = :id
-            ", [':id' => $id]);
-
-            $producto = $resultado[0] ?? null;
+            $producto = ProductoModel::obtenerConStockPorId($id);
         }
 
-        $categorias = DataBase::query("
-            SELECT id_categoria, nombre_categoria
-            FROM categorias
-            ORDER BY nombre_categoria
-        ");
+        $categorias = CategoriaModel::obtenerTodasCategorias();
 
         $datos = [
             "titulo" => "Editar Producto",
@@ -201,27 +180,14 @@ class AdminController extends Controller
             die('Todos los campos son obligatorios y deben contener valores válidos.');
         }
 
-        // Verificar categoría
-        $categoria = DataBase::query(
-            "SELECT id_categoria FROM categorias WHERE id_categoria = :id",
-            [':id' => $idCategoria]
-        );
-
-        if (empty($categoria)) {
+        // Verificar categoría desde el modelo CategoriaModel
+        if (!CategoriaModel::existeCategoria($idCategoria)) {
             die('La categoría seleccionada no existe.');
         }
 
-        // Verificar producto si es una edición
-        if ($id !== null) {
-
-            $productoExistente = DataBase::query(
-                "SELECT id_producto FROM productos WHERE id_producto = :id",
-                [':id' => $id]
-            );
-
-            if (empty($productoExistente)) {
-                die('El producto que intentás editar no existe.');
-            }
+        // Verificar producto si es una edición desde el modelo ProductoModel
+        if ($id !== null && !ProductoModel::existeProducto($id)) {
+            die('El producto que intentás editar no existe.');
         }
 
         // Manejo de imagen
@@ -239,113 +205,14 @@ class AdminController extends Controller
             }
         }
 
-        if ($id !== null) {
-
-            // Actualizar producto
-            if ($imagen !== null) {
-
-                $sql = "
-                    UPDATE productos
-                    SET nombre_prenda = :nombre,
-                        precio = :precio,
-                        id_categoria = :id_categoria,
-                        imagen = :imagen
-                    WHERE id_producto = :id
-                ";
-
-                $params = [
-                    ':nombre' => $nombre,
-                    ':precio' => $precio,
-                    ':id_categoria' => $idCategoria,
-                    ':imagen' => $imagen,
-                    ':id' => $id
-                ];
-
-            } else {
-
-                $sql = "
-                    UPDATE productos
-                    SET nombre_prenda = :nombre,
-                        precio = :precio,
-                        id_categoria = :id_categoria
-                    WHERE id_producto = :id
-                ";
-
-                $params = [
-                    ':nombre' => $nombre,
-                    ':precio' => $precio,
-                    ':id_categoria' => $idCategoria,
-                    ':id' => $id
-                ];
-            }
-
-            DataBase::execute($sql, $params);
-
-            // Verificar si ya existe un registro de stock
-            $checkStock = DataBase::query(
-                "SELECT id FROM stock WHERE producto_id = :id",
-                [':id' => $id]
-            );
-
-            if (!empty($checkStock)) {
-
-                DataBase::execute(
-                    "UPDATE stock
-                    SET cantidad = :cantidad
-                    WHERE producto_id = :id",
-                    [
-                        ':cantidad' => $stockCantidad,
-                        ':id' => $id
-                    ]
-                );
-
-            } else {
-
-                DataBase::execute(
-                    "INSERT INTO stock (producto_id, cantidad)
-                    VALUES (:id, :cantidad)",
-                    [
-                        ':id' => $id,
-                        ':cantidad' => $stockCantidad
-                    ]
-                );
-            }
-
-        } else {
-
-            // Crear producto
-            DataBase::execute(
-                "INSERT INTO productos
-                    (nombre_prenda, precio, id_categoria, imagen)
-                VALUES
-                    (:nombre, :precio, :id_categoria, :imagen)",
-                [
-                    ':nombre' => $nombre,
-                    ':precio' => $precio,
-                    ':id_categoria' => $idCategoria,
-                    ':imagen' => $imagen ?? 'no-image.png'
-                ]
-            );
-
-            // Obtener el ID del último producto insertado
-            $nuevoProducto = DataBase::query(
-                "SELECT LAST_INSERT_ID() AS id_producto"
-            );
-
-            $productoId = $nuevoProducto[0]->id_producto ?? null;
-
-            if ($productoId) {
-
-                DataBase::execute(
-                    "INSERT INTO stock (producto_id, cantidad)
-                    VALUES (:id, :cantidad)",
-                    [
-                        ':id' => $productoId,
-                        ':cantidad' => $stockCantidad
-                    ]
-                );
-            }
-        }
+        // Delegar creación o actualización y manejo de stock a ProductoModel
+        ProductoModel::guardarProductoConStock([
+            'nombre'       => $nombre,
+            'precio'       => $precio,
+            'id_categoria' => $idCategoria,
+            'stock'        => $stockCantidad,
+            'imagen'       => $imagen
+        ], $id);
 
         header("Location: " . self::$path . "index.php?url=admin/productos");
         exit();
@@ -359,18 +226,8 @@ class AdminController extends Controller
         $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
         if ($id !== null && $id > 0) {
-
-            // Primero eliminamos el stock asociado
-            DataBase::execute(
-                "DELETE FROM stock WHERE producto_id = :id",
-                [':id' => $id]
-            );
-
-            // Después eliminamos el producto
-            DataBase::execute(
-                "DELETE FROM productos WHERE id_producto = :id",
-                [':id' => $id]
-            );
+            // Delegar eliminación de stock y producto a ProductoModel
+            ProductoModel::eliminarProductoConStock($id);
         }
 
         header("Location: " . self::$path . "index.php?url=admin/productos");
@@ -383,7 +240,8 @@ class AdminController extends Controller
         SessionController::onlyUsers();
         $ruta = self::$path;
 
-        $usuarios = DataBase::query("SELECT * FROM usuarios ORDER BY id DESC");
+        // Consulta delegada a UserModel
+        $usuarios = UserModel::obtenerTodosDesc();
 
         $datos = [
             "titulo" => "Gestión de Usuarios",
@@ -441,8 +299,8 @@ class AdminController extends Controller
         $usuario = null;
 
         if ($id) {
-            $resultado = DataBase::query("SELECT * FROM usuarios WHERE id = :id", [':id' => $id]);
-            $usuario = $resultado[0] ?? null;
+            // Consulta delegada a UserModel
+            $usuario = UserModel::obtenerPorId($id);
         }
 
         $datos = [
@@ -466,7 +324,7 @@ class AdminController extends Controller
         Response::render($this->viewDir(__NAMESPACE__), $nombre_de_archivoDeVista, $parametros_de_vista);
     }
 
-    /* 4. Guardar o actualizar usuario (La que ya tenías o adaptada a tus campos) */
+    /* 4. Guardar o actualizar usuario */
     public function actionGuardarUsuario()
     {
         SessionController::onlyUsers();
@@ -474,34 +332,17 @@ class AdminController extends Controller
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $id = $_POST['id'] ?? null;
-            $nombre = trim($_POST['nombre'] ?? '');
-            $email = trim($_POST['email'] ?? '');
-            $password = $_POST['password'] ?? '';
-            $direccion = trim($_POST['direccion'] ?? '');
-            $telefono = trim($_POST['telefono'] ?? '');
-            $rol = trim($_POST['rol'] ?? 'cliente');
+            $datosUsuario = [
+                'nombre'    => trim($_POST['nombre'] ?? ''),
+                'email'     => trim($_POST['email'] ?? ''),
+                'password'  => $_POST['password'] ?? '',
+                'direccion' => trim($_POST['direccion'] ?? ''),
+                'telefono'  => trim($_POST['telefono'] ?? ''),
+                'rol'       => trim($_POST['rol'] ?? 'cliente')
+            ];
 
-            if (!empty($id)) {
-                if (!empty($password)) {
-                    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-                    $sql = "UPDATE usuarios SET nombre = :nombre, email = :email, password = :password, direccion = :direccion, telefono = :telefono, rol = :rol WHERE id = :id";
-                    DataBase::execute($sql, [':nombre' => $nombre, ':email' => $email, ':password' => $passwordHash, ':direccion' => $direccion, ':telefono' => $telefono, ':rol' => $rol, ':id' => $id]);
-                } else {
-                    $sql = "UPDATE usuarios SET nombre = :nombre, email = :email, direccion = :direccion, telefono = :telefono, rol = :rol WHERE id = :id";
-                    DataBase::execute($sql, [':nombre' => $nombre, ':email' => $email, ':direccion' => $direccion, ':telefono' => $telefono, ':rol' => $rol, ':id' => $id]);
-                }
-            } else {
-                $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-                $sql = "INSERT INTO usuarios (nombre, email, password, direccion, telefono, rol) VALUES (:nombre, :email, :password, :direccion, :telefono, :rol)";
-                DataBase::execute($sql, [
-                    ':nombre' => $nombre,
-                    ':email' => $email,
-                    ':password' => $passwordHash,
-                    ':direccion' => $direccion,
-                    ':telefono' => $telefono,
-                    ':rol' => $rol
-                ]);
-            }
+            // Inserción o actualización delegada a UserModel
+            UserModel::guardarUsuarioAdmin($datosUsuario, $id);
 
             header("Location: " . self::$path . "public/index.php?url=admin/usuarios");
             exit();
@@ -516,7 +357,8 @@ class AdminController extends Controller
         
         $id = $_GET['id'] ?? null;
         if ($id) {
-            DataBase::execute("DELETE FROM usuarios WHERE id = :id", [':id' => $id]);
+            // Eliminación delegada a UserModel
+            UserModel::eliminarUsuario($id);
         }
 
         header("Location: " . self::$path . "public/index.php?url=admin/usuarios");
@@ -524,18 +366,13 @@ class AdminController extends Controller
     }
 
     /* 1. Listar todos los pedidos */
-
     public function actionPedidos()
     {
         SessionController::onlyUsers();
         $ruta = self::$path;
 
-        $sql = "SELECT p.*, p.id_pedido as id, u.nombre as cliente_nombre, m.nombre as medio_pago_nombre 
-                FROM pedidos p 
-                LEFT JOIN usuarios u ON p.id_usuario = u.id 
-                LEFT JOIN medios_pago m ON p.id_pago = m.id 
-                ORDER BY p.id_pedido DESC";
-        $pedidos = DataBase::query($sql);
+        // Consulta delegada a PedidoModel
+        $pedidos = PedidoModel::obtenerTodosAdmin();
 
         $datos = [
             "titulo" => "Gestión de Pedidos",
@@ -570,26 +407,10 @@ class AdminController extends Controller
         $detalles = [];
 
         if ($pedido_id) {
-            // 1. Datos principales del pedido, cliente y medio de pago (usando p.id_pedido y p.id_pago)
-            $sqlPedido = "SELECT p.*, p.id_pedido as id, p.direccion as cliente_direccion, u.nombre as cliente_nombre, u.email as cliente_email, m.nombre as medio_pago_nombre 
-                          FROM pedidos p 
-                          LEFT JOIN usuarios u ON p.id_usuario = u.id 
-                          LEFT JOIN medios_pago m ON p.id_pago = m.id 
-                          WHERE p.id_pedido = :id";
-            $resPedido = DataBase::query($sqlPedido, [':id' => $pedido_id]);
-            $pedido = $resPedido[0] ?? null;
-
-            // 2. Productos que componen el detalle
-            // 2. Productos que componen el detalle
-               $sqlDetalle = "SELECT dp.*, pr.nombre_prenda as producto_nombre, pr.precio as producto_precio 
-               FROM detalle_producto dp 
-               LEFT JOIN productos pr ON dp.producto_id = pr.id_producto
-               WHERE dp.pedido_id = :pedido_id";
-               $detalles = DataBase::query($sqlDetalle, [':pedido_id' => $pedido_id]);
-           
-        
+            // Consultas delegadas a PedidoModel
+            $pedido = PedidoModel::obtenerPedidoConCliente($pedido_id);
+            $detalles = PedidoModel::obtenerDetallesPorPedidoId($pedido_id);
         }
-
 
         $datos = [
             "titulo" => "Detalle del Pedido #" . ($pedido_id ?? ''),
@@ -624,17 +445,11 @@ class AdminController extends Controller
             $nuevo_estado = $_POST['estado'] ?? 'Pendiente';
 
             if ($pedido_id) {
-                // 1. Actualizar el estado en la base de datos
-                $sql = "UPDATE pedidos SET estado = :estado WHERE id_pedido = :id";
-                DataBase::execute($sql, [':estado' => $nuevo_estado, ':id' => $pedido_id]);
+                // 1. Actualizar el estado mediante PedidoModel
+                PedidoModel::actualizarEstado($pedido_id, $nuevo_estado);
 
-                // 2. Obtener los datos del cliente y su email para enviarle el correo
-                $sqlCliente = "SELECT p.*, u.nombre as cliente_nombre, u.email as cliente_email 
-                               FROM pedidos p 
-                               LEFT JOIN usuarios u ON p.id_usuario = u.id 
-                               WHERE p.id_pedido = :id";
-                $resultado = DataBase::query($sqlCliente, [':id' => $pedido_id]);
-                $pedidoInfo = $resultado[0] ?? null;
+                // 2. Obtener los datos del cliente mediante PedidoModel
+                $pedidoInfo = PedidoModel::obtenerPedidoConCliente($pedido_id);
 
                 if ($pedidoInfo && !empty($pedidoInfo->cliente_email)) {
                     $para = $pedidoInfo->cliente_email;

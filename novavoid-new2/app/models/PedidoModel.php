@@ -74,4 +74,40 @@ class PedidoModel extends Model
 
         return $idPedido;
     }
+
+    public static function obtenerTodosAdmin()
+    {
+        $sql = "SELECT p.*, p.id_pedido as id, u.nombre as cliente_nombre, m.nombre as medio_pago_nombre 
+                FROM pedidos p 
+                LEFT JOIN usuarios u ON p.id_usuario = u.id 
+                LEFT JOIN medios_pago m ON p.id_pago = m.id 
+                ORDER BY p.id_pedido DESC";
+        return DataBase::query($sql);
+    }
+
+    public static function obtenerPedidoConCliente($id)
+    {
+        $sql = "SELECT p.*, p.id_pedido as id, p.direccion as cliente_direccion, u.nombre as cliente_nombre, u.email as cliente_email, m.nombre as medio_pago_nombre 
+                FROM pedidos p 
+                LEFT JOIN usuarios u ON p.id_usuario = u.id 
+                LEFT JOIN medios_pago m ON p.id_pago = m.id 
+                WHERE p.id_pedido = :id";
+        $res = DataBase::query($sql, [':id' => $id]);
+        return is_array($res) && isset($res[0]) ? $res[0] : null;
+    }
+
+    public static function obtenerDetallesPorPedidoId($idPedido)
+    {
+        $sql = "SELECT dp.*, pr.nombre_prenda as producto_nombre, pr.precio as producto_precio 
+                FROM detalle_producto dp 
+                LEFT JOIN productos pr ON dp.producto_id = pr.id_producto
+                WHERE dp.pedido_id = :pedido_id";
+        return DataBase::query($sql, [':pedido_id' => $idPedido]);
+    }
+
+    public static function actualizarEstado($idPedido, $nuevoEstado)
+    {
+        $sql = "UPDATE pedidos SET estado = :estado WHERE id_pedido = :id";
+        return DataBase::execute($sql, [':estado' => $nuevoEstado, ':id' => $idPedido]);
+    }
 }

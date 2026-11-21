@@ -20,4 +20,10 @@ class CategoriaModel extends Model
 
 		return $result;
     }
+
+    public static function existeCategoria($id) {
+        $sql = "SELECT id_categoria FROM categorias WHERE id_categoria = :id LIMIT 1";
+        $result = DataBase::query($sql, [':id' => $id]);
+        return !empty($result);
+    }
 }

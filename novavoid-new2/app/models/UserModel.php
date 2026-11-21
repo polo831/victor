@@ -145,4 +145,46 @@ class UserModel extends Model
         
         return DataBase::execute($sql, $params);
     }
+
+    public static function obtenerTodosDesc()
+    {
+        return DataBase::query("SELECT * FROM usuarios ORDER BY id DESC");
+    }
+
+    public static function guardarUsuarioAdmin($datos, $id = null)
+    {
+        $nombre = $datos['nombre'];
+        $email = $datos['email'];
+        $password = $datos['password'] ?? '';
+        $direccion = $datos['direccion'];
+        $telefono = $datos['telefono'];
+        $rol = $datos['rol'] ?? 'cliente';
+
+        if (!empty($id)) {
+            if (!empty($password)) {
+                $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+                $sql = "UPDATE usuarios SET nombre = :nombre, email = :email, password = :password, direccion = :direccion, telefono = :telefono, rol = :rol WHERE id = :id";
+                return DataBase::execute($sql, [':nombre' => $nombre, ':email' => $email, ':password' => $passwordHash, ':direccion' => $direccion, ':telefono' => $telefono, ':rol' => $rol, ':id' => $id]);
+            } else {
+                $sql = "UPDATE usuarios SET nombre = :nombre, email = :email, direccion = :direccion, telefono = :telefono, rol = :rol WHERE id = :id";
+                return DataBase::execute($sql, [':nombre' => $nombre, ':email' => $email, ':direccion' => $direccion, ':telefono' => $telefono, ':rol' => $rol, ':id' => $id]);
+            }
+        } else {
+            $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+            $sql = "INSERT INTO usuarios (nombre, email, password, direccion, telefono, rol) VALUES (:nombre, :email, :password, :direccion, :telefono, :rol)";
+            return DataBase::execute($sql, [
+                ':nombre' => $nombre,
+                ':email' => $email,
+                ':password' => $passwordHash,
+                ':direccion' => $direccion,
+                ':telefono' => $telefono,
+                ':rol' => $rol
+            ]);
+        }
+    }
+
+    public static function eliminarUsuario($id)
+    {
+        return DataBase::execute("DELETE FROM usuarios WHERE id = :id", [':id' => $id]);
+    }
 }
